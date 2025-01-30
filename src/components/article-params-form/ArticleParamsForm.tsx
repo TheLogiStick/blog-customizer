@@ -1,7 +1,7 @@
 import { ArrowButton } from 'src/ui/arrow-button';
 import { Button } from 'src/ui/button';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
 	ArticleStateType,
 	backgroundColors,
@@ -38,6 +38,31 @@ export const ArticleParamsForm = ({
 		defaultArticleState.contentWidth
 	);
 
+	const articleRef = useRef<HTMLDivElement>(null);
+	const arrowBtnRef = useRef<HTMLDivElement>(null);
+
+	const handleOutsideClick = (event: MouseEvent) => {
+		if (
+			isOpen &&
+			articleRef.current?.contains(event.target as Node) !== true &&
+			arrowBtnRef.current?.contains(event.target as Node) !== true
+		) {
+			setIsOpen(false);
+		}
+	};
+
+	useEffect(() => {
+		if (isOpen) {
+			document.addEventListener('mousedown', handleOutsideClick);
+		} else {
+			document.removeEventListener('mousedown', handleOutsideClick);
+		}
+
+		return () => {
+			document.removeEventListener('mousedown', handleOutsideClick);
+		};
+	}, [isOpen]);
+
 	const handleSubmit = (event: React.FormEvent) => {
 		event.preventDefault();
 		onChange({
@@ -57,24 +82,22 @@ export const ArticleParamsForm = ({
 		setContentWidth(defaultArticleState.contentWidth);
 
 		onChange({
-			fontFamilyOption: defaultArticleState.fontFamilyOption,
-			fontSizeOption: defaultArticleState.fontSizeOption,
-			fontColor: defaultArticleState.fontColor,
-			backgroundColor: defaultArticleState.backgroundColor,
-			contentWidth: defaultArticleState.contentWidth,
+			...defaultArticleState,
 		});
 	};
 
 	return (
 		<>
 			<ArrowButton
+				ref={arrowBtnRef}
 				isOpen={isOpen}
-				onClick={() => {
-					setIsOpen(!isOpen);
-				}}
+				onClick={() => setIsOpen((prev) => !prev)}
 			/>
 			<aside
-				className={`${styles.container} ${isOpen && styles.container_open}`}>
+				ref={articleRef}
+				className={`${styles.container} ${
+					isOpen ? styles.container_open : ''
+				}`}>
 				<form
 					className={styles.form}
 					onSubmit={handleSubmit}
